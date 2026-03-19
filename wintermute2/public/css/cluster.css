@@ -1,0 +1,72 @@
+/* cluster.css */
+/* Word clusters — DOM positioned divs floating in the void */
+
+.cluster {
+  position: absolute;
+  max-width: 280px;
+  text-align: left;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 2s ease-in;
+
+  /* Arrive: fade in smoothly */
+  animation: none;
+}
+
+.cluster.arriving {
+  opacity: 0;
+}
+
+.cluster.present {
+  opacity: 1;
+}
+
+/* Typeface variants */
+.cluster.serif {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.cluster.mono {
+  font-family: 'Courier New', 'Courier', monospace;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.cluster.sans {
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+}
+
+/* Each line within a cluster */
+.cluster-line {
+  display: block;
+  white-space: nowrap;
+  color: rgb(210, 207, 200);
+}
+
+/* Mass variants — heavier words brighter and larger feel */
+.cluster.heavy .cluster-line {
+  color: rgb(228, 224, 216);
+}
+
+.cluster.light .cluster-line {
+  color: rgb(185, 182, 176);
+  font-style: italic;
+}
+
+/* Mode: literary gets slightly more space between lines */
+.cluster.literary {
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* Mode: document gets tighter, more clinical */
+.cluster.document {
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wintermute — testbed</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;1,300&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+    :root {
+      --void:     #09090a;
+      --void-warm:#0b0a09;
+      --dim:      #2a2a2a;
+      --rule:     #1e1e1e;
+      --muted:    #444;
+      --label:    #666;
+      --text:     #ccc8c0;
+      --bright:   #e4e0d8;
+      --accent:   #c8a96e;
+      --voice:    #7a9e8a;
+      --document: #7a8a9e;
+      --literary: #9e7a8a;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--void);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ── LAYOUT — full screen void ──────────────────── */
+    #shell {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── VOID / STAGE ───────────────────────────────── */
+    #void-wrap {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #void-bg {
+      position: absolute;
+      inset: 0;
+      background: var(--void);
+      animation: breathe 18s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%   { background-color: #09090a; }
+      40%  { background-color: #0b0a09; }
+      60%  { background-color: #0a0909; }
+      100% { background-color: #09090a; }
+    }
+
+    #stage {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* ── CLUSTERS ───────────────────────────────────── */
+    .cluster {
+      position: absolute;
+      max-width: 260px;
+      pointer-events: none;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .cluster-line {
+      display: block;
+      white-space: nowrap;
+      line-height: 1.38;
+    }
+
+    .cluster.serif  { font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+    .cluster.mono   { font-family: 'IBM Plex Mono', monospace; font-weight: 300; }
+    .cluster.sans   { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 200; letter-spacing: 0.03em; }
+
+    .cluster.heavy  .cluster-line { color: var(--bright); }
+    .cluster.medium .cluster-line { color: var(--text); }
+    .cluster.light  .cluster-line { color: #9a9790; font-style: italic; }
+
+    .cluster.literary { line-height: 1.55; }
+    .cluster.document { line-height: 1.22; letter-spacing: -0.01em; }
+    .cluster.voice    { line-height: 1.38; }
+
+    /* mode indicator pip — tiny, top-right of cluster */
+    .cluster::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: -10px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      opacity: 0.5;
+    }
+    .cluster.voice::after    { background: var(--voice); }
+    .cluster.document::after { background: var(--document); }
+    .cluster.literary::after { background: var(--literary); }
+
+    /* ── LEGEND ─────────────────────────────────────── */
+    #legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0.4;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .legend-dot.voice    { background: var(--voice); }
+    .legend-dot.document { background: var(--document); }
+    .legend-dot.literary { background: var(--literary); }
+  </style>
+</head>
+<body>
+
+<script>
+// ── DISPLAY CONFIG ───────────────────────────────────────────────────────────
+// To switch register: comment out the active ACTIVE_CLUSTER line,
+// uncomment the one you want, save and reload.
+//
+// fields: lines[], mass (0–1), fontSize, decayDuration (ms),
+//         lingerOpacity (0 = no linger), typeface (serif|mono|sans),
+//         rotation (degrees), mode (voice|document|literary)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── REGISTER: voice ──────────────────────────────────────────────────────────
+// Wintermute's own voice. Noun phrases, broken syntax, developing obsessions.
+const ACTIVE_CLUSTER = {
+  lines:         ["corroded seam", "the weight of that"],
+  mass:          0.65,
+  fontSize:      19,
+  decayDuration: 14000,
+  lingerOpacity: 0.09,
+  typeface:      "mono",
+  rotation:      -1.8,
+  mode:          "voice"
+};
+
+// ── REGISTER: document ───────────────────────────────────────────────────────
+// Damaged technical document. Procedures missing their object.
+// const ACTIVE_CLUSTER = {
+//   lines:         ["prior to insertion", "stabilize the reading", "not recommended beyond"],
+//   mass:          0.38,
+//   fontSize:      15,
+//   decayDuration: 9000,
+//   lingerOpacity: 0,
+//   typeface:      "mono",
+//   rotation:      0.4,
+//   mode:          "document"
+// };
+
+// ── REGISTER: literary ───────────────────────────────────────────────────────
+// Fragment from Greek tragedy or Shakespeare. Source unnamed. Thought incomplete.
+// const ACTIVE_CLUSTER = {
+//   lines:         ["when the sea wall", "holds nothing"],
+//   mass:          0.80,
+//   fontSize:      22,
+//   decayDuration: 18000,
+//   lingerOpacity: 0.12,
+//   typeface:      "serif",
+//   rotation:      1.1,
+//   mode:          "literary"
+// };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auto-fire on load — spawns ACTIVE_CLUSTER into the void immediately,
+// then repeats on a jittered interval to simulate pulse.js behaviour.
+// Adjust REPEAT_INTERVAL_MS to taste. Set to 0 to disable auto-repeat.
+const REPEAT_INTERVAL_MS = 12000; // ms between re-transmissions (0 = once only)
+</script>
+
+<div id="shell">
+  <div id="void-wrap">
+    <div id="void-bg"></div>
+    <div id="stage"></div>
+    <div id="legend">
+      <div class="legend-item"><div class="legend-dot voice"></div>voice</div>
+      <div class="legend-item"><div class="legend-dot document"></div>document</div>
+      <div class="legend-item"><div class="legend-dot literary"></div>literary</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── RENDERER ─────────────────────────────────────────────────────────────────
+
+const stage        = document.getElementById('stage');
+const active       = [];
+let   frameRunning = false;
+
+// ── SCULPTURE ────────────────────────────────────────────────────────────────
+
+function spawnCluster(descriptor) {
+  const {
+    lines, mass = 0.5, fontSize = 18, decayDuration = 12000,
+    lingerOpacity = 0, typeface = 'serif', rotation = 0, mode = 'voice'
+  } = descriptor;
+
+  // Cull if overcrowded
+  if (active.length >= 12) cullOldest(active.length - 7);
+
+  const el = document.createElement('div');
+  el.className = [
+    'cluster', typeface, mode,
+    mass > 0.6 ? 'heavy' : mass < 0.3 ? 'light' : 'medium'
+  ].join(' ');
+
+  el.style.fontSize = `${fontSize}px`;
+  el.style.transform = `rotate(${rotation}deg)`;
+
+  lines.forEach(line => {
+    const span = document.createElement('span');
+    span.className = 'cluster-line';
+    span.textContent = line;
+    el.appendChild(span);
+  });
+
+  // Safe bounds
+  const approxH = lines.length * fontSize * 1.5 + 20;
+  const margin  = 70;
+  const W = stage.offsetWidth;
+  const H = stage.offsetHeight;
+
+  const x = margin + Math.random() * Math.max(0, W - 280 - margin * 2);
+  const y = margin + Math.random() * Math.max(0, H - approxH - margin * 2);
+
+  el.style.left = `${x}px`;
+  el.style.top  = `${y}px`;
+
+  stage.appendChild(el);
+
+  const now = performance.now();
+  const holdDuration = 4000 + mass * 8000 + Math.random() * 3000;
+
+  const entry = {
+    el, x, y,
+    vx: (Math.random() - 0.5) * 0.22,
+    vy: (Math.random() - 0.5) * 0.16,
+    mass, decayDuration, lingerOpacity,
+    state:      'arriving',
+    arriveTime: now,
+    decayStart: now + holdDuration,
+    decayEnd:   now + holdDuration + decayDuration,
+    lingerStart: null,
+    lingerEnd:   null,
+  };
+
+  active.push(entry);
+
+  // Trigger fade-in
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.transition = 'opacity 2s ease-in';
+    el.style.opacity = '1';
+    entry.state = 'present';
+  }));
+
+  if (!frameRunning) { frameRunning = true; requestAnimationFrame(tick); }
+//  updateCount();
+}
+
+function tick(now) {
+  const W = stage.offsetWidth;
+  const H = stage.offsetHeight;
+
+  for (let i = active.length - 1; i >= 0; i--) {
+    const c = active[i];
+    if (c.state === 'removed') { active.splice(i, 1); continue; }
+
+    // Drift
+    c.vx += (W * 0.5 - c.x - 130) * 0.000025 * (1 - c.mass * 0.4);
+    c.vy += (H * 0.5 - c.y - 30)  * 0.000025 * (1 - c.mass * 0.4);
+    c.vx += (Math.random() - 0.5) * 0.012;
+    c.vy += (Math.random() - 0.5) * 0.010;
+    const damp = 0.990 - c.mass * 0.008;
+    c.vx *= damp; c.vy *= damp;
+    c.x  += c.vx; c.y  += c.vy;
+    c.el.style.left = `${c.x}px`;
+    c.el.style.top  = `${c.y}px`;
+
+    // Decay
+    if (c.state === 'present' && now >= c.decayStart) c.state = 'decaying';
+
+    if (c.state === 'decaying') {
+      const progress = Math.min(1, (now - c.decayStart) / (c.decayEnd - c.decayStart));
+
+      if (c.lingerOpacity > 0 && progress > 0.72) {
+        c.state      = 'lingering';
+        c.lingerStart = now;
+        c.lingerEnd   = now + 4000 + Math.random() * 7000;
+        c.el.style.transition = 'none';
+        c.el.style.opacity = String(c.lingerOpacity);
+      } else {
+        c.el.style.transition = 'none';
+        c.el.style.opacity = String(Math.max(0, 1 - progress));
+        if (progress >= 1) { removeCluster(c, i); continue; }
+      }
+    }
+
+    if (c.state === 'lingering') {
+      const p = Math.min(1, (now - c.lingerStart) / (c.lingerEnd - c.lingerStart));
+      c.el.style.opacity = String(Math.max(0, c.lingerOpacity * (1 - p)));
+      if (p >= 1) { removeCluster(c, i); continue; }
+    }
+  }
+
+  if (active.length > 0) requestAnimationFrame(tick);
+  else frameRunning = false;
+}
+
+function removeCluster(c, i) {
+  c.state = 'removed';
+  c.el.style.opacity = '0';
+  setTimeout(() => { if (c.el.parentNode) c.el.parentNode.removeChild(c.el); }, 600);
+  active.splice(i, 1);
+}
+
+function cullOldest(count) {
+  [...active]
+    .filter(c => c.state !== 'removed')
+    .sort((a, b) => parseFloat(a.el.style.opacity || 1) - parseFloat(b.el.style.opacity || 1))
+    .slice(0, count)
+    .forEach(c => {
+      c.decayDuration = Math.max(c.decayDuration * 0.2, 600);
+      c.lingerOpacity = 0;
+      if (c.state === 'present' || c.state === 'arriving') {
+        c.state      = 'decaying';
+        c.decayStart = performance.now();
+        c.decayEnd   = c.decayStart + c.decayDuration;
+      }
+    });
+}
+
+// ── AUTO-FIRE ────────────────────────────────────────────────────────────────
+
+function autoFire() {
+  spawnCluster(ACTIVE_CLUSTER);
+  if (REPEAT_INTERVAL_MS > 0) {
+    const jitter = REPEAT_INTERVAL_MS * 0.4;
+    const next   = REPEAT_INTERVAL_MS + (Math.random() - 0.5) * jitter;
+    setTimeout(autoFire, next);
+  }
+}
+
+setTimeout(autoFire, 1200);
+
+</script>
+</body>
+</html>
