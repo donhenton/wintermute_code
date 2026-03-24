@@ -1,16 +1,16 @@
 // server.js
 // Entry point — wires all backend modules
+// No memory import — stateless transmission
 
 import "dotenv/config";
-import http     from "http";
-import express  from "express";
-import path     from "path";
+import http    from "http";
+import express from "express";
+import path    from "path";
 import { fileURLToPath } from "url";
 
-import { transmit }              from "./wintermute.js";
-import { remember, recall }      from "./memory.js";
-import { sculpt }                from "./sculptor.js";
-import { start as startPulse }   from "./pulse.js";
+import { transmit }            from "./wintermute.js";
+import { sculpt }              from "./sculptor.js";
+import { start as startPulse } from "./pulse.js";
 import { init as initSocket, broadcast } from "./socket.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,11 +26,8 @@ initSocket(server);
 
 async function doTransmit(mode = "voice") {
   try {
-    const history = recall();
-    const raw     = await transmit(history, mode);
+    const raw = await transmit(mode);
     if (!raw) return;
-
-    remember(raw);
 
     const cluster = sculpt(raw, mode);
     if (!cluster) return;

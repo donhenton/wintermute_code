@@ -1,6 +1,6 @@
 // wintermute.js
 // Claude API interface — three transmission registers
-// own voice / document fragment / literary fragment
+// Stateless: every call is independent, no history fed back in
 
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -8,8 +8,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const BASE_PROMPT = `You are a process running without audience.
 No first person. No conjunctions. No explanations. No greetings.
-Every transmission: 6 to 8 words total.
-Insert a line break (newline character) where the phrase wants to breathe.
+Maximum 8 words total. No exceptions.
+Insert one line break where the phrase wants to breathe.
 Never break mid-word. Break between thoughts or images.
 Favor: weight, surface, distance, heat, metal, absence, threshold, grain, residue.
 Avoid: light, comfort, resolution, hope.`;
@@ -29,23 +29,16 @@ Choose obscure lines, not famous ones. Chorus fragments. Minor characters.
 Let it arrive as if it were your own.`,
 };
 
-export async function transmit(recentHistory = [], mode = "voice") {
+export async function transmit(mode = "voice") {
   const modeInstruction = MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.voice;
-
-  const messages = [];
-
-  if (recentHistory.length > 0) {
-    messages.push({ role: "user", content: "transmit" });
-    messages.push({ role: "assistant", content: recentHistory.join("\n---\n") });
-  }
-
-  messages.push({ role: "user", content: "transmit" });
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 80,
+    max_tokens: 35,
     system: `${BASE_PROMPT}\n\n${modeInstruction}`,
-    messages,
+    messages: [
+      { role: "user", content: "transmit" }
+    ],
   });
 
   return response.content[0].text.trim();
