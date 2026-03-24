@@ -8,6 +8,11 @@ you should cd in wintermute2 folder as that is where npm run dev should
 
 be run from
 
+The API key is at:
+ 
+Go to platform.anthropic.com — this is the API platform where you manage your keys, billing, and usage.  Sign up with your email or Google account.
+
+
 \---
 
 ## setup
