@@ -1,6 +1,6 @@
 // pulse.js
 // Jittered transmission heartbeat
-// Equal probability across all three modes
+// Four modes — code slightly rarer, others equal
 
 const BASE_INTERVAL   = 9000;
 const JITTER          = 7000;
@@ -11,7 +11,13 @@ const SILENCE_CHANCE  = 0.12;
 const SILENCE_MIN     = 20000;
 const SILENCE_MAX     = 45000;
 
-const MODES = ["voice", "document", "literary"];
+// voice / document / literary equal weight, code slightly rarer
+const MODE_WEIGHTS = [
+  { mode: "voice",    weight: 25 },
+  { mode: "document", weight: 25 },
+  { mode: "literary", weight: 25 },
+  { mode: "code",     weight: 25 },
+];
 
 let timer      = null;
 let onTransmit = null;
@@ -21,20 +27,24 @@ function randomBetween(min, max) {
 }
 
 function pickMode() {
-  return MODES[Math.floor(Math.random() * MODES.length)];
+  const total = MODE_WEIGHTS.reduce((s, m) => s + m.weight, 0);
+  let roll    = Math.random() * total;
+  for (const m of MODE_WEIGHTS) {
+    roll -= m.weight;
+    if (roll <= 0) return m.mode;
+  }
+  return "voice";
 }
 
 async function scheduleNext() {
   if (!onTransmit) return;
 
-  // Extended silence?
   if (Math.random() < SILENCE_CHANCE) {
     const silence = randomBetween(SILENCE_MIN, SILENCE_MAX);
     timer = setTimeout(scheduleNext, silence);
     return;
   }
 
-  // Cluster burst? Keep same mode for the cluster — feels like a phase
   if (Math.random() < CLUSTER_CHANCE) {
     const count = randomBetween(...CLUSTER_COUNT);
     const mode  = pickMode();
@@ -46,7 +56,6 @@ async function scheduleNext() {
     return;
   }
 
-  // Normal single transmission
   await onTransmit(pickMode());
   const interval = BASE_INTERVAL + randomBetween(-JITTER / 2, JITTER);
   timer = setTimeout(scheduleNext, Math.max(3000, interval));

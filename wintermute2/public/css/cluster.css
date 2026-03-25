@@ -70,3 +70,16 @@
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
+
+/* Mode: code — mono only, tight, near-level, dimmer */
+.cluster.code {
+  font-family: 'Courier New', 'Courier', monospace;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  font-size: 0.88em;
+}
+
+.cluster.code .cluster-line {
+  color: rgb(170, 185, 170);
+}
